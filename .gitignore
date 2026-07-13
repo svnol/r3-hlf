@@ -1,0 +1,10 @@
+# Readable calculator source - kept private, NEVER served via public jsDelivr.
+# Only built + obfuscated artifacts get committed/pushed.
+masters/
+
+# local QA / preview scratch
+_qa*.html
+
+# build tooling (node_modules, extracted sources, test harnesses) - not the
+# deliverable; only dist/ (the minified+obfuscated output) is committed
+build/
