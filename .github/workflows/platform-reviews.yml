@@ -1,0 +1,55 @@
+name: Refresh platform reviews
+
+# Weekly pull of Google + Trustpilot review counts into dist/platform-reviews.json.
+# Sunday 18:00 UTC = Monday 06:00 NZST / 07:00 NZDT.
+on:
+  schedule:
+    - cron: '0 18 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: platform-reviews
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch review data
+        env:
+          # The only real secret. Everything below is public identifiers.
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          # Home Loan Factory, 103 Johnsonville Road, Wellington.
+          GOOGLE_PLACE_ID: ChIJgTTpzOMdmEURFgNhMn3R9Ck
+          TRUSTPILOT_BUSINESS_UNIT_ID: 6a8f65330b11bc76a1b67c5a
+        run: node scripts/fetch-platform-reviews.mjs
+
+      - name: Commit if changed
+        id: commit
+        run: |
+          if git diff --quiet -- dist/platform-reviews.json; then
+            echo "No change in review data."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dist/platform-reviews.json
+          git commit -m "chore: refresh platform review data"
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Purge jsDelivr cache
+        if: steps.commit.outputs.changed == 'true'
+        run: |
+          curl -sS "https://purge.jsdelivr.net/gh/svnol/r3-hlf@main/dist/platform-reviews.json" || true
+          curl -sS "https://purge.jsdelivr.net/gh/svnol/r3-hlf@main/dist/platform-reviews.min.js" || true
