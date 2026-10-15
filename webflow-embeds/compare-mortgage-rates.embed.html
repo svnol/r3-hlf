@@ -1,0 +1,50 @@
+<!-- Fragment Mono (HLF label/eyebrow font) — StackSans is assumed already loaded by the Webflow site -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/svnol/r3-hlf@2.4.2/dist/compare-mortgage-rates.min.css">
+
+<div class="hlf-table-wrapper">
+  
+  <div id="hlf-agreement-modal" class="hlf-modal-overlay">
+    <div class="hlf-modal-box">
+      <h3 class="hlf-modal-title">Important Rate Information</h3>
+      <ul class="hlf-modal-list">
+        <li><strong>20% Deposit Required:</strong> The rates displayed generally apply to borrowers with a minimum 20% deposit or equity. Low equity margins may apply to borrowers with less than a 20% deposit, so please consult your adviser.</li>
+        <li><strong>Guide Only:</strong> Rates are subject to change without notice and should be used as a guide only. Please see the provider's website or consult your financial adviser for further details.</li>
+        <li><strong>Discretionary Discounts:</strong> The rates shown may be further discounted at the lender's absolute discretion depending on your application. Check with your adviser to see what unadvertised discounts you may qualify for.</li>
+      </ul>
+      <button id="hlf-btn-agree" class="hlf-btn-agree">I Agree & Understand</button>
+    </div>
+  </div>
+
+  <div class="hlf-table-container">
+    <table class="hlf-rate-table" id="live-rate-table">
+      <thead>
+        <tr id="table-headers">
+            <th>Bank / Lender</th>
+            <th>6 Months</th>
+            <th>1 Year</th>
+            <th>18 Months</th>
+            <th>2 Years</th>
+            <th>3 Years</th>
+            <th>4 Years</th>
+            <th>5 Years</th>
+            <th class="hlf-floating-col">Floating</th>
+            <th style="border-left: 1px solid var(--hlf-border-2);">Last Updated</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr><td colspan="10" style="padding: 30px; color: var(--hlf-grey); font-weight: 600;">Connecting to the market...</td></tr>
+        <tr><td colspan="10"></td></tr><tr><td colspan="10"></td></tr><tr><td colspan="10"></td></tr>
+        <tr><td colspan="10"></td></tr><tr><td colspan="10"></td></tr><tr><td colspan="10"></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="hlf-disclaimer">
+    <strong>* First Home Buyer Rates:</strong> These rates are highly restricted and only available to qualifying first home buyers meeting strict lending criteria. They are excluded from the standard market highlights.<br><br>
+    <strong>Disclaimer:</strong> The interest rates displayed are advertised special rates pulled from third-party market data and are subject to change without notice. Special rates generally require a minimum 20% equity/deposit and for your salary to be credited to a transactional account with the lending bank. Standard lending criteria, terms, and conditions apply. This table is for informational purposes only and does not constitute a formal offer of finance or personalized financial advice.
+  </div>
+</div>
+
+<script defer src="https://cdn.jsdelivr.net/gh/svnol/r3-hlf@2.4.2/dist/compare-mortgage-rates.min.js"></script>
