@@ -1,0 +1,43 @@
+name: Refresh rates snapshot
+
+# Hourly: bake the public mortgage rates into the Compare NZ Mortgage Rates
+# page HTML so crawlers that don't run JavaScript (AI tools) can read them.
+# Writes and publishes one CMS item only, and only when the rates change.
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build the snapshot and print it without writing to Webflow'
+        type: boolean
+        default: false
+
+concurrency:
+  group: rates-snapshot
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Update snapshot in Webflow
+        env:
+          # The only real secret: Webflow site token, CMS read + write.
+          WEBFLOW_API_TOKEN: ${{ secrets.WEBFLOW_API_TOKEN }}
+          # Public identifiers.
+          RATES_FEED_URL: https://script.google.com/macros/s/AKfycbyCLTwvBPJdFX5L7VGmcUgJEQLTXjr93O32YFW3IBvhbFMvGaoa-tTthy_oban4KX0p/exec
+          WEBFLOW_COLLECTION_ID: 6a1baf404596ba888865b211   # Tools
+          WEBFLOW_ITEM_ID: 6a5461384fabb6487a5a4418         # Compare NZ Mortgage Rates
+          DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+        run: node scripts/update-rates-snapshot.mjs
