@@ -37,6 +37,10 @@ const DRY_RUN = process.env.DRY_RUN === '1' || Boolean(OVERVIEW_FILE);
 const FIELD = 'overview';
 const START = '<!-- hlf-rates-snapshot:start -->';
 const END = '<!-- hlf-rates-snapshot:end -->';
+// Saving the item in Webflow's editor rewrites every attribute to single
+// quotes, so match the embed with either quote style.
+const TABLE_RE = /id=["']live-rate-table["']/;
+const TBODY_RE = /<tbody id=["']table-body["']>/g;
 // Webflow caps rich-text custom code at 50,000 characters. Leave headroom.
 const MAX_FIELD_CHARS = 45000;
 
@@ -200,25 +204,25 @@ function buildRows(data) {
 
   return finalBankData.map(row => {
     const name = row.type === 'fhb'
-      ? `${row.brand} <span class="hlf-fhb-label">${row.fhbSubtitle}</span>`
+      ? `${row.brand} <span class='hlf-fhb-label'>${row.fhbSubtitle}</span>`
       : row.brand;
     const cells = rateColumns.map(col => {
-      const cls = col.label === 'Floating' ? ' class="hlf-floating-col"' : '';
+      const cls = col.label === 'Floating' ? " class='hlf-floating-col'" : '';
       if (row.brand === 'Kiwibank' && col.label === '18 Months') {
-        return `<td${cls}><span class="hlf-not-offered">Not Offered</span></td>`;
+        return `<td${cls}><span class='hlf-not-offered'>Not Offered</span></td>`;
       }
       let text = (row[col.index] || '').replace(/[^0-9.%]/g, '').trim();
       const value = parseFloat(text);
       if (text === '' || text === '.' || isNaN(value)) {
-        return `<td${cls}>${row.type === 'fhb' ? '' : '<span class="hlf-poa">P.O.A</span>'}</td>`;
+        return `<td${cls}>${row.type === 'fhb' ? '' : "<span class='hlf-poa'>P.O.A</span>"}</td>`;
       }
       if (!text.includes('%')) text += '%';
       if (value === lowest[col.index] && row.type !== 'fhb') {
-        return `<td${cls}><span class="hlf-best-rate" style="display: block; padding: 6px 10px;">${text}</span></td>`;
+        return `<td${cls}><span class='hlf-best-rate' style='display: block; padding: 6px 10px;'>${text}</span></td>`;
       }
       return `<td${cls}>${text}</td>`;
     }).join('');
-    return `<tr><td class="hlf-bank-name">${name}</td>${cells}<td class="hlf-date-col">${nzDate(row[INDEX_TIMESTAMP])}</td></tr>`;
+    return `<tr><td class='hlf-bank-name'>${name}</td>${cells}<td class='hlf-date-col'>${nzDate(row[INDEX_TIMESTAMP])}</td></tr>`;
   });
 }
 
@@ -234,13 +238,13 @@ function mergeSnapshot(overview, rowsHtml) {
   if (s !== -1 || e !== -1) throw new Error('Only one snapshot marker found in the field. Fix the embed by hand.');
 
   // First run: swap the placeholder rows for the marked snapshot block.
-  const open = '<tbody id="table-body">';
-  const o = overview.indexOf(open);
-  const c = overview.indexOf('</tbody>', o);
-  if (o === -1 || c === -1 || overview.indexOf(open, o + 1) !== -1) {
+  const opens = [...overview.matchAll(TBODY_RE)];
+  const c = opens.length === 1 ? overview.indexOf('</tbody>', opens[0].index) : -1;
+  if (c === -1) {
     throw new Error('Could not find exactly one <tbody id="table-body"> in the field.');
   }
-  return overview.slice(0, o + open.length) + '\n' + block + '\n      ' + overview.slice(c);
+  const afterOpen = opens[0].index + opens[0][0].length;
+  return overview.slice(0, afterOpen) + '\n' + block + '\n      ' + overview.slice(c);
 }
 
 // ---- Webflow Data API v2 ----------------------------------------------------
@@ -289,14 +293,15 @@ async function main() {
   if (item.isDraft || item.isArchived) throw new Error('CMS item is a draft or archived. Not touching it.');
 
   const current = item.fieldData?.[FIELD];
-  if (typeof current !== 'string' || !current.includes('id="live-rate-table"')) {
-    throw new Error(`Field "${FIELD}" does not contain the rates table embed. Not touching it.`);
+  if (typeof current !== 'string' || !TABLE_RE.test(current)) {
+    throw new Error(`Field "${FIELD}" does not contain the rates table embed (id="live-rate-table"). Not touching it.`);
   }
   const next = mergeSnapshot(current, rows);
   if (next.length > MAX_FIELD_CHARS) throw new Error(`Field would be ${next.length} characters, over the ${MAX_FIELD_CHARS} safety cap.`);
 
   console.log(`${rows.length} lenders rendered. Field length ${current.length} -> ${next.length}.`);
-  if (next === current) {
+  // Webflow may re-quote the stored HTML; a quote-only difference isn't a change.
+  if (next.replaceAll('"', "'") === current.replaceAll('"', "'")) {
     console.log('Snapshot unchanged. Nothing to publish.');
     return;
   }

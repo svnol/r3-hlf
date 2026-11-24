@@ -1,11 +1,13 @@
 name: Refresh rates snapshot
 
-# Hourly: bake the public mortgage rates into the Compare NZ Mortgage Rates
+# Every 6 hours: bake the public mortgage rates into the Compare NZ Mortgage Rates
 # page HTML so crawlers that don't run JavaScript (AI tools) can read them.
 # Writes and publishes one CMS item only, and only when the rates change.
 on:
   schedule:
-    - cron: '17 * * * *'
+    # Lenders change rates at most daily, and the live table fetches fresh rates
+    # in the browser anyway; the snapshot is only for crawlers.
+    - cron: '17 */6 * * *'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -25,9 +27,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
